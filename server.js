@@ -8,8 +8,6 @@ app.use(bodyParser.json());
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 5000;
-
-// Use data.js as "database"
 const users = require("./data.js");
 
 // -------------------
@@ -32,12 +30,8 @@ function getBaseURL(req) {
 app.post("/create-user", (req, res) => {
   const { name, password } = req.body;
 
-  // Generate main token (45 chars)
   const mainToken = "t_" + [...Array(45)].map(() => Math.random().toString(36)[2]).join("");
-
-  // Initial QR token
   const qrToken = "QR_" + Math.random().toString(36).substring(2, 8);
-
   const baseURL = getBaseURL(req);
 
   const newUser = {
@@ -85,12 +79,13 @@ app.get("/sunrise/:token", (req, res) => {
 });
 
 // -------------------
-// Refresh QR
+// Refresh QR (no token input, just auto-refresh latest user)
 // -------------------
 app.post("/refresh-qr", (req, res) => {
-  const { mainToken } = req.body;
-  const user = users.find(u => u.mainToken === mainToken);
-  if (!user) return res.send("Invalid user");
+  // For simplicity: refresh **last created user**
+  if (users.length === 0) return res.send("No users to refresh");
+
+  const user = users[users.length - 1];
 
   const newQr = "QR_" + Math.random().toString(36).substring(2, 8);
   user.qrToken = newQr;
@@ -98,11 +93,10 @@ app.post("/refresh-qr", (req, res) => {
 
   const baseURL = getBaseURL(req);
   const newQrLink = `${baseURL}/sunrise/${user.mainToken}?qr=${newQr}`;
-
   user.history.push(`QR Link: ${newQrLink}`);
 
   res.json({
-    message: "QR refreshed",
+    message: `QR refreshed for ${user.name}`,
     qrLink: newQrLink,
     history: user.history
   });
