@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <title>School QR System</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    input, button { padding: 5px; margin: 5px; }
+    body { font-family: Arial, sans-serif; margin: 30px; background: #121212; color: #eee; }
+    input, button { padding: 5px; margin: 5px; border-radius: 4px; border: none; }
+    button { cursor: pointer; background: #1a73e8; color: #fff; }
+    button:hover { background: #155ab6; }
     .qr-container { margin-top: 20px; }
     .qr-history { margin-top: 10px; }
-    img { border: 1px solid #333; }
-    h1, h2 { color: #333; }
+    img { border: 2px solid #333; }
+    h1, h2 { color: #fff; }
+    a { color: #1a73e8; }
   </style>
 </head>
 <body>
@@ -25,10 +28,7 @@
   <div id="qrHistory" class="qr-history"></div>
 
   <h2>Refresh QR</h2>
-  <form id="qrForm">
-    <input type="text" name="mainToken" placeholder="Enter Main Token" required />
-    <button type="submit">Refresh QR</button>
-  </form>
+  <button id="refreshBtn">Refresh QR</button>
   <div id="qrResult" class="qr-container"></div>
 
   <script>
@@ -36,7 +36,7 @@
     const result = document.getElementById("result");
     const qrImage = document.getElementById("qrImage");
     const qrHistoryDiv = document.getElementById("qrHistory");
-    const qrForm = document.getElementById("qrForm");
+    const refreshBtn = document.getElementById("refreshBtn");
     const qrResult = document.getElementById("qrResult");
 
     function showQrImage(link) {
@@ -68,18 +68,9 @@
       showHistory(json.history);
     });
 
-    // Refresh QR
-    qrForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(qrForm);
-      const data = { mainToken: formData.get("mainToken") };
-
-      const res = await fetch("/refresh-qr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-
+    // Refresh QR button
+    refreshBtn.addEventListener("click", async () => {
+      const res = await fetch("/refresh-qr", { method: "POST" });
       const json = await res.json();
       qrResult.innerHTML = `
         <p>${json.message}</p>
