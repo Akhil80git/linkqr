@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>School QR System</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    input, button { padding: 5px; margin: 5px; }
+    .qr-container { margin-top: 20px; }
+    .qr-history { margin-top: 10px; }
+    img { border: 1px solid #333; }
+    h1, h2 { color: #333; }
+  </style>
+</head>
+<body>
+  <h1>Create User</h1>
+  <form id="userForm">
+    <input type="text" name="name" placeholder="Enter Name" required />
+    <input type="password" name="password" placeholder="Set Password" required />
+    <button type="submit">Create User</button>
+  </form>
+
+  <div id="result" class="qr-container"></div>
+  <div id="qrImage" class="qr-container"></div>
+  <div id="qrHistory" class="qr-history"></div>
+
+  <h2>Refresh QR</h2>
+  <form id="qrForm">
+    <input type="text" name="mainToken" placeholder="Enter Main Token" required />
+    <button type="submit">Refresh QR</button>
+  </form>
+  <div id="qrResult" class="qr-container"></div>
+
+  <script>
+    const userForm = document.getElementById("userForm");
+    const result = document.getElementById("result");
+    const qrImage = document.getElementById("qrImage");
+    const qrHistoryDiv = document.getElementById("qrHistory");
+    const qrForm = document.getElementById("qrForm");
+    const qrResult = document.getElementById("qrResult");
+
+    function showQrImage(link) {
+      qrImage.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}" alt="QR Code" />`;
+    }
+
+    function showHistory(history) {
+      qrHistoryDiv.innerHTML = "<h3>QR History:</h3>" + history.map(qr => `<p>${qr}</p>`).join("");
+    }
+
+    // Create user
+    userForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(userForm);
+      const data = { name: formData.get("name"), password: formData.get("password") };
+
+      const res = await fetch("/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const json = await res.json();
+      result.innerHTML = `
+        <p><strong>Main Link:</strong> <a href="${json.mainLink}" target="_blank">${json.mainLink}</a></p>
+        <p><strong>QR Link:</strong> <a href="${json.qrLink}" target="_blank">${json.qrLink}</a></p>
+      `;
+      showQrImage(json.qrLink);
+      showHistory(json.history);
+    });
+
+    // Refresh QR
+    qrForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(qrForm);
+      const data = { mainToken: formData.get("mainToken") };
+
+      const res = await fetch("/refresh-qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const json = await res.json();
+      qrResult.innerHTML = `
+        <p>${json.message}</p>
+        <p><strong>New QR Link:</strong> <a href="${json.qrLink}" target="_blank">${json.qrLink}</a></p>
+      `;
+      showQrImage(json.qrLink);
+      showHistory(json.history);
+    });
+  </script>
+</body>
+</html>
